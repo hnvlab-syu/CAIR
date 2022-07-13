@@ -323,7 +323,7 @@ class ImageRestorationModel(BaseModel):
                             f'{img_name}_gt.png')
 
                     imwrite(sr_img, save_img_path)
-                    imwrite(gt_img, save_gt_img_path)
+                    # imwrite(gt_img, save_gt_img_path)
 
             if with_metrics:
                 # calculate metrics
@@ -356,27 +356,27 @@ class ImageRestorationModel(BaseModel):
 
             self.collected_metrics = collected_metrics
         
-        keys = []
-        metrics = []
-        for name, value in self.collected_metrics.items():
-            keys.append(name)
-            metrics.append(value)
-        metrics = torch.stack(metrics, 0)
-        torch.distributed.reduce(metrics, dst=0)
-        if self.opt['rank'] == 0:
-            metrics_dict = {}
-            cnt = 0
-            for key, metric in zip(keys, metrics):
-                if key == 'cnt':
-                    cnt = float(metric)
-                    continue
-                metrics_dict[key] = float(metric)
+            keys = []
+            metrics = []
+            for name, value in self.collected_metrics.items():
+                keys.append(name)
+                metrics.append(value)
+            metrics = torch.stack(metrics, 0)
+            torch.distributed.reduce(metrics, dst=0)
+            if self.opt['rank'] == 0:
+                metrics_dict = {}
+                cnt = 0
+                for key, metric in zip(keys, metrics):
+                    if key == 'cnt':
+                        cnt = float(metric)
+                        continue
+                    metrics_dict[key] = float(metric)
 
-            for key in metrics_dict:
-                metrics_dict[key] /= cnt
+                for key in metrics_dict:
+                    metrics_dict[key] /= cnt
 
-            self._log_validation_metric_values(current_iter, dataloader.dataset.opt['name'],
-                                               tb_logger, metrics_dict)
+                self._log_validation_metric_values(current_iter, dataloader.dataset.opt['name'],
+                                                tb_logger, metrics_dict)
         return 0.
 
     def nondist_validation(self, *args, **kwargs):
