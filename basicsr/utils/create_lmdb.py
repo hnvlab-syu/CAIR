@@ -131,3 +131,14 @@ def create_lmdb_for_SIDD():
     img_path_list, keys = prepare_keys(folder_path, 'png')
     make_lmdb_from_imgs(folder_path, lmdb_path, img_path_list, keys)
     '''
+
+def create_lmdb_for_cisr(input_path, target_path):
+    lmdb_path = input_path + '.lmdb'
+
+    img_path_list, keys = prepare_keys(input_path, 'jpg')
+    make_lmdb_from_imgs(input_path, lmdb_path, img_path_list, keys)
+
+    lmdb_path = target_path + '.lmdb'
+
+    img_path_list, keys = prepare_keys(target_path, 'png')
+    make_lmdb_from_imgs(target_path, lmdb_path, img_path_list, keys)
