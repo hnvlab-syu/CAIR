@@ -18,10 +18,13 @@ pip install -r requirements.txt
 python setup.py develop --no_cuda_ext
 ```
 
-### Training
+### Train/Test
 #### Instagram Filter Removal
 ```
 python -m torch.distributed.launch --nproc_per_node=4 --master_port=4321 basicsr/train.py -opt options/train/IFFI/IFFI.yml --launcher pytorch
+```
+```
+python -m torch.distributed.launch --nproc_per_node=4 --master_port=4321 basicsr/test.py -opt options/test/IFFI/NAFNetSR-width32.yml --launcher pytorch
 ```
 
 #### Compressed Input Super-Resolution 
