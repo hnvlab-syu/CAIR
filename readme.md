@@ -20,16 +20,23 @@ python setup.py develop --no_cuda_ext
 
 ### Train/Test
 #### Instagram Filter Removal
+- Train
 ```
 python -m torch.distributed.launch --nproc_per_node=4 --master_port=4321 basicsr/train.py -opt options/train/IFFI/IFFI.yml --launcher pytorch
 ```
+- Test
 ```
-python -m torch.distributed.launch --nproc_per_node=4 --master_port=4321 basicsr/test.py -opt options/test/IFFI/NAFNetSR-width32.yml --launcher pytorch
+python -m torch.distributed.launch --nproc_per_node=4 --master_port=4321 basicsr/test.py -opt options/test/IFFI/NAFNet-width32.yml --launcher pytorch
 ```
 
 #### Compressed Input Super-Resolution 
+- Train
 ```
 python -m torch.distributed.launch --nproc_per_node=4 --master_port=4320 basicsr/train.py -opt options/train/CompressedInputSR/NAFNetSR-B_x4.yml --launcher pytorch
+```
+- Test
+```
+python -m torch.distributed.launch --nproc_per_node=4 --master_port=4320 basicsr/test.py -opt options/test/CompressedInputSR/NAFNetSR-B_x4.yml --launcher pytorch
 ```
 
 
