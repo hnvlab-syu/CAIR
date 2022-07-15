@@ -99,7 +99,7 @@ logger:
   save_checkpoint_freq: !!float 5e3
   use_tb_logger: true
   wandb:
-    project: ~
+    project: AIM2022-IFFI
     resume_id: ~
 
 # dist training settings
