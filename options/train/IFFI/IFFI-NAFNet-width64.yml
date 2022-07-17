@@ -5,11 +5,11 @@
 # Copyright 2018-2020 BasicSR Authors
 # ------------------------------------------------------------------------
 # general settings
-name: NAFNet-IFFI-width64
+name: IFFI-NAFNet-width64
 model_type: ImageRestorationModel
 scale: 1
 num_gpu: 4
-manual_seed: 77
+manual_seed: 42
 
 datasets:
   train:
@@ -28,7 +28,7 @@ datasets:
 
     # data loader
     use_shuffle: true
-    num_worker_per_gpu: 8
+    num_worker_per_gpu: 4
     batch_size_per_gpu: 8
     dataset_enlarge_ratio: 1
     prefetch_mode: ~
@@ -79,7 +79,7 @@ logger:
   save_checkpoint_freq: !!float 5e3
   use_tb_logger: true
   wandb:
-    project: ~
+    project: AIM2022-IFFI
     resume_id: ~
 
 # dist training settings

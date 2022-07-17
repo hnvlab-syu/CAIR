@@ -5,7 +5,7 @@
 # Copyright 2018-2020 BasicSR Authors
 # ------------------------------------------------------------------------
 # general settings
-name: NAFNet-IFFI-width32
+name: IFFI-NAFNet-width32
 model_type: ImageRestorationModel
 scale: 1
 num_gpu: 4
@@ -28,7 +28,7 @@ datasets:
 
     # data loader
     use_shuffle: true
-    num_worker_per_gpu: 4
+    num_worker_per_gpu: 8
     batch_size_per_gpu: 8
     dataset_enlarge_ratio: 1
     prefetch_mode: ~
