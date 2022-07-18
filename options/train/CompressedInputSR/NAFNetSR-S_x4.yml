@@ -5,7 +5,7 @@
 # Copyright 2018-2020 BasicSR Authors
 # ------------------------------------------------------------------------
 # general settings
-name: NAFNetSR-CISR_x4_Crop256
+name: NAFNetSR-S-CISR_x4_Crop256
 model_type: ImageRestorationModel
 scale: 4
 num_gpu: 4
@@ -36,9 +36,9 @@ datasets:
 network_g:
   type: NAFNetSR
   up_scale: 4
-  width: 96
-  num_blks: 64
-  drop_path_rate: 0.2
+  width: 64
+  num_blks: 32
+  drop_path_rate: 0.1
   drop_out_rate: 0.
 
 # path

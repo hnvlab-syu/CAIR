@@ -5,7 +5,7 @@
 # Copyright 2018-2020 BasicSR Authors
 # ------------------------------------------------------------------------
 # general settings
-name: NAFNetSR-CISR_x4_Crop256
+name: CISR_NAFLSR-B_x4_Crop256
 model_type: ImageRestorationModel
 scale: 4
 num_gpu: 4
@@ -27,14 +27,14 @@ datasets:
 
     # data loader
     use_shuffle: true
-    num_worker_per_gpu: 4
+    num_worker_per_gpu: 8
     batch_size_per_gpu: 8
     dataset_enlarge_ratio: 1
     prefetch_mode: ~
 
 # network structures
 network_g:
-  type: NAFNetSR
+  type: NAFLSR
   up_scale: 4
   width: 96
   num_blks: 64
@@ -69,22 +69,6 @@ train:
     type: MSELoss
     loss_weight: 1.
     reduction: mean
-
-# # validation settings
-# val:
-#   val_freq: !!float 2e4
-#   save_img: false
-#   trans_num: 1
-
-#   max_minibatch: 1
-
-#   metrics:
-#     psnr: # metric name, can be arbitrary
-#       type: calculate_psnr
-#       crop_border: 0
-#       test_y_channel: false
-#     ssim:
-#       type: calculate_skimage_ssim
 
 # logging settings
 logger:
