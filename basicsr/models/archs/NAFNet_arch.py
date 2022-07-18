@@ -12,10 +12,12 @@ Simple Baselines for Image Restoration
   year={2022}
 }
 '''
-
+import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+
+from basicsr.models.archs.arch_util import MySequential
 from basicsr.models.archs.arch_util import LayerNorm2d
 from basicsr.models.archs.local_arch import Local_Base
 
@@ -161,6 +163,7 @@ class NAFNet(nn.Module):
         x = F.pad(x, (0, mod_pad_w, 0, mod_pad_h))
         return x
 
+
 class NAFNetLocal(Local_Base, NAFNet):
     def __init__(self, *args, train_size=(1, 3, 256, 256), fast_imp=False, **kwargs):
         Local_Base.__init__(self)
@@ -172,6 +175,131 @@ class NAFNetLocal(Local_Base, NAFNet):
         self.eval()
         with torch.no_grad():
             self.convert(base_size=base_size, train_size=train_size, fast_imp=fast_imp)
+
+class DropPath(nn.Module):
+    def __init__(self, drop_rate, module):
+        super().__init__()
+        self.drop_rate = drop_rate
+        self.module = module
+
+    def forward(self, *feats):
+        if self.training and np.random.rand() < self.drop_rate:
+            return feats
+
+        new_feats = self.module(*feats)
+        factor = 1. / (1 - self.drop_rate) if self.training else 1.
+
+        if self.training and factor != 1.:
+            new_feats = tuple([x+factor*(new_x-x) for x, new_x in zip(feats, new_feats)])
+        return new_feats
+    
+class LAM_Module(nn.Module):
+    '''
+    Layer attention module from 
+    https://github.com/wwlCape/HAN/blob/master/src/model/han.py
+    '''
+    def __init__(self, in_dim):
+        super(LAM_Module, self).__init__()
+        self.chanel_in = in_dim
+
+        self.gamma = nn.Parameter(torch.zeros(1))
+        self.softmax  = nn.Softmax(dim=-1)
+        
+    def forward(self, x):
+        '''
+        inputs :
+            x : input feature maps( B X N X C X H X W)
+        returns :
+            out : attention value + input feature
+            attention: B X N X N
+        '''
+        m_batchsize, N, C, height, width = x.size()
+        proj_query = x.view(m_batchsize, N, -1)
+        proj_key = x.view(m_batchsize, N, -1).permute(0, 2, 1)
+        energy = torch.bmm(proj_query, proj_key)
+        energy_new = torch.max(energy, -1, keepdim=True)[0].expand_as(energy)-energy
+        attention = self.softmax(energy_new)
+        proj_value = x.view(m_batchsize, N, -1)
+
+        out = torch.bmm(attention, proj_value)
+        out = out.view(m_batchsize, N, C, height, width)
+
+        out = self.gamma * out + x
+        out = out.view(m_batchsize, -1, height, width)
+        return out
+    
+class NAFL(nn.Module):
+    '''
+    NAFNet + Layer attention for Image Restoration
+    (Same with NAFLSR architecture from NAFSSR_arch.py except Pixelshuffle layer)
+    '''
+    def __init__(self, width=48, num_blks=16, img_channel=3, drop_path_rate=0., drop_out_rate=0.):
+        super().__init__()
+        self.intro = nn.Conv2d(
+            in_channels=img_channel,
+            out_channels=width,
+            kernel_size=3,
+            padding=1,
+            stride=1,
+            groups=1,
+            bias=True
+        )
+        self.body = MySequential(
+            *[DropPath(
+                drop_path_rate, 
+                NAFBlock(
+                    width,
+                    drop_out_rate=drop_out_rate
+                )) for i in range(num_blks)]
+        )
+        
+        self.inp_conv = nn.Sequential(
+            nn.Conv2d(
+                in_channels=img_channel,
+                out_channels=img_channel,
+                kernel_size=3,
+                padding=1,
+                stride=1,
+                groups=1,
+                bias=True
+            ),
+        )
+        self.out_conv = nn.Sequential(
+            nn.Conv2d(
+                in_channels=width,
+                out_channels=img_channel,
+                kernel_size=3,
+                padding=1, 
+                stride=1,
+                groups=1,
+                bias=True
+            ),
+        )
+        self.conv1 = nn.Conv2d(
+                        in_channels=num_blks * width,
+                        out_channels=width,
+                        kernel_size=1
+                    )
+        self.la = LAM_Module(width)
+        
+    def forward(self, inp):
+        inp_feat = self.inp_conv(inp)
+        feats = self.intro(inp)
+        
+        for name, midlayer in self.body._modules.items():
+            feats = midlayer(feats)[0]
+            if name == '0':
+                feats_cat = feats.unsqueeze(1)
+            else:
+                feats_cat = torch.cat([feats.unsqueeze(1), feats_cat], 1)
+        nf_out = feats
+        lam_out = self.la(feats_cat)
+        lam_out = self.conv1(lam_out)
+        
+        out = nf_out + lam_out
+        out = self.out_conv(out)
+        out = out + inp_feat
+        return out
 
 
 if __name__ == '__main__':
