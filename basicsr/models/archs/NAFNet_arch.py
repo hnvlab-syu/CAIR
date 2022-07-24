@@ -213,7 +213,11 @@ class LAM_Module(nn.Module):
             out : attention value + input feature
             attention: B X N X N
         '''
-        m_batchsize, N, C, height, width = x.size()
+        if len(x.size()) == 4:
+            N, C, height, width = x.size()
+            m_batchsize = 1
+        else:
+            m_batchsize, N, C, height, width = x.size()
         proj_query = x.view(m_batchsize, N, -1)
         proj_key = x.view(m_batchsize, N, -1).permute(0, 2, 1)
         energy = torch.bmm(proj_query, proj_key)
