@@ -266,7 +266,10 @@ class LayerNormFunction(torch.autograd.Function):
     @staticmethod
     def forward(ctx, x, weight, bias, eps):
         ctx.eps = eps
-        N, C, H, W = x.size()
+        if len(x.size()) == 3:
+            C, H, W = x.size()
+        else:
+            N, C, H, W = x.size()
         mu = x.mean(1, keepdim=True)
         var = (x - mu).pow(2).mean(1, keepdim=True)
         y = (x - mu) / (var + eps).sqrt()
