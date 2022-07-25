@@ -308,12 +308,14 @@ class ColorNAFNet(nn.Module):
             x = decoder(x)
 
         x = self.ending(x)
-        x = x + inp
         
         color = self.color_attention(inp)
         color = self.upsample(color)
         color = self.conv1x1(color)
+        color = x * color
         x = x + color
+
+        x = x + inp
 
         return x[:, :, :H, :W]
 
@@ -390,6 +392,7 @@ class LAM_Module(nn.Module):
         out = self.gamma * out + x
         out = out.view(m_batchsize, -1, height, width)
         return out
+    
     
 class NAFL(nn.Module):
     '''
