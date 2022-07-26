@@ -68,11 +68,6 @@ train:
     loss_weight: 1
     reduction: mean
 
-# validation settings
-val:
-  val_freq: !!float 2e4
-  save_img: false
-
 # logging settings
 logger:
   print_freq: 200
