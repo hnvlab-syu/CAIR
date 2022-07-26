@@ -5,11 +5,11 @@
 # Copyright 2018-2020 BasicSR Authors
 # ------------------------------------------------------------------------
 # general settings
-name: NAFNet-IFFI-width64
+name: IFFI-NAFNet-width64
 model_type: ImageRestorationModel
 scale: 1
-num_gpu: 4
-manual_seed: 77
+num_gpu: 2
+manual_seed: 42
 
 datasets:
   train:
@@ -29,7 +29,7 @@ datasets:
     # data loader
     use_shuffle: true
     num_worker_per_gpu: 8
-    batch_size_per_gpu: 8
+    batch_size_per_gpu: 4
     dataset_enlarge_ratio: 1
     prefetch_mode: ~
 
@@ -68,10 +68,10 @@ train:
     loss_weight: 1
     reduction: mean
 
-# validation settings
-val:
-  val_freq: !!float 2e4
-  save_img: false
+# # validation settings
+# val:
+#   val_freq: !!float 2e4
+#   save_img: false
 
 # logging settings
 logger:
@@ -79,7 +79,7 @@ logger:
   save_checkpoint_freq: !!float 5e3
   use_tb_logger: true
   wandb:
-    project: ~
+    project: real aim 2022
     resume_id: ~
 
 # dist training settings
