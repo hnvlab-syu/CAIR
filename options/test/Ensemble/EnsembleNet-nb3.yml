@@ -15,8 +15,8 @@ manual_seed: 36
 datasets:
   test:
     name: iffi-test
-    type: SingleImageDataset
-    dataroot_lq: ./datasets/IFFI/test/input
+    type: SingleNpyDataset
+    dataroot_lq: ./datasets/IFFI/test_ensemble/input
     io_backend:
       type: disk
 
