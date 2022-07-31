@@ -34,7 +34,7 @@ datasets:
     prefetch_mode: ~
 
 network_g:
-  type: CAIR_S
+  type: CAIR_S_Local
   width: 64
   enc_blk_nums: [2, 2, 4, 8]
   middle_blk_num: 12

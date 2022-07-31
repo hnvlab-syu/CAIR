@@ -34,7 +34,7 @@ datasets:
     prefetch_mode: ~
 
 network_g:
-  type: CAIR_S
+  type: CAIR_S_Local
   width: 32
   enc_blk_nums: [2, 2, 4, 8]
   middle_blk_num: 12
@@ -56,10 +56,10 @@ train:
 
   scheduler:
     type: TrueCosineAnnealingLR
-    T_max: 400000
+    T_max: 200000
     eta_min: !!float 1e-7
 
-  total_iter: 400000
+  total_iter: 200000
   warmup_iter: -1 # no warm up
 
   # losses
