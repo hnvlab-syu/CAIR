@@ -1,10 +1,10 @@
-## AIM Workshop and Challenges @ ECCV 2022
+## CAIR: Multi-Scale Color Attention Network for Instagram Filter Removal
 
-### Challenges
+### Challenge
 - [Instagram Filter Removal Challenge](https://codalab.lisn.upsaclay.fr/competitions/5081#learn_the_details)
 
 ### Installation & Setting
-This implementation is from [NAFNet](https://github.com/megvii-model/NAFNet). 
+This implementation is based on [NAFNet](https://github.com/megvii-model/NAFNet). 
 
 ```python
 python 3.9.5
@@ -18,7 +18,7 @@ python setup.py develop --no_cuda_ext
 ```
 
 ### Data Prepration
-You can also train on Instagram Filter Removal Challenge dataset by following these steps:
+You can train on Instagram Filter Removal Challenge dataset by following these steps:
 ```
   | - datasets
   |  | - IFFI
@@ -44,17 +44,15 @@ python scripts/data/dataset_to_lmdb.py --basedir ./datasets/IFFI --ensemble fals
 python scripts/data/dataset_to_lmdb.py --basedir ./datasets/IFFI --ensemble true
 ```
 
-Inferenced test data into 숫자 folders
+Result data into submission format
 ```
 python scripts/data/test_dataset.py --resultdir ./results/model_name
 ```
 
 ### Train/Test
-#### Instagram Filter Removal
 - Train
 ```
 python -m torch.distributed.launch --nproc_per_node=4 --master_port=4321 basicsr/train.py -opt options/train/CAIR/CAIR_M-width32.yml --launcher pytorch
-python -m torch.distributed.launch --nproc_per_node=4 --master_port=4321 basicsr/train.py -opt options/train/Ensemble/EnsembleNet-nb3.yml --launcher pytorch
 
 ```
 - Test
@@ -64,3 +62,18 @@ python -m torch.distributed.launch --nproc_per_node=4 --master_port=4321 basicsr
 python -m torch.distributed.launch --nproc_per_node=4 --master_port=4321 basicsr/test.py -opt options/test/Ensemble/EnsembleNet-nb3.yml --launcher pytorch
 ```
 
+
+### Ensemble learning
+- Data preparation
+
+  For ensemble learning, train and test set should be inferenced with three models, and then three images from three models should be contatenated.
+```
+python -m torch.distributed.launch --nproc_per_node=4 --master_port=4321 basicsr/test.py -opt ./options/test/Ensemble/CAIR_M-width32.yml --launcher pytorch
+python -m torch.distributed.launch --nproc_per_node=4 --master_port=4320 basicsr/test.py -opt ./options/test/Ensemble/CAIR_S-width64.yml --launcher pytorch
+python -m torch.distributed.launch --nproc_per_node=4 --master_port=4319 basicsr/test.py -opt ./options/test/Ensemble/CAIR_S-width32.yml --launcher pytorch
+python concat_ensemble_input.py
+```
+- Train ensemble network
+```
+python -m torch.distributed.launch --nproc_per_node=4 --master_port=4321 basicsr/train.py -opt options/train/Ensemble/EnsembleNet-nb3.yml --launcher pytorch
+```
