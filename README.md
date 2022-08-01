@@ -21,6 +21,7 @@ python setup.py develop --no_cuda_ext
 ### Data Prepration
 You can train on Instagram Filter Removal Challenge dataset by following these steps:
 <details><summary>Datasets directory structure</summary>
+
 ```
   datasets
   └──IFFI
