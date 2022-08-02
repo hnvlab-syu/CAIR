@@ -39,6 +39,7 @@ network_g:
   enc_blk_nums: [2, 2, 4, 8]
   middle_blk_num: 12
   dec_blk_nums: [2, 2, 2, 2]
+  tta: false
 
 # path
 path:

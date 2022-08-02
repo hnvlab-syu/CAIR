@@ -22,10 +22,11 @@ datasets:
 
 # network structures
 network_g:
-  type: EnsembleNetTTA
+  type: EnsembleNet
   width: 32
   ens_num: 3 # number of ensemble models
   blk_num: 3 # number of NAFBlocks
+  tta: True
 
 # path
 path:

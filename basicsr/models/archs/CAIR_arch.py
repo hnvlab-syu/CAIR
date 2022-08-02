@@ -63,9 +63,9 @@ class ColorAttention(nn.Module):
 
 class CAIR_S(nn.Module):
 
-    def __init__(self, img_channel=3, width=16, middle_blk_num=1, enc_blk_nums=[], dec_blk_nums=[]):
+    def __init__(self, img_channel=3, width=16, middle_blk_num=1, enc_blk_nums=[], dec_blk_nums=[], tta=False):
         super().__init__()
-
+        self.tta = tta
         self.intro = nn.Conv2d(in_channels=img_channel, out_channels=width, kernel_size=3, padding=1, stride=1, groups=1,
                               bias=True)
         self.ending = nn.Conv2d(in_channels=width, out_channels=img_channel, kernel_size=3, padding=1, stride=1, groups=1,
@@ -114,7 +114,10 @@ class CAIR_S(nn.Module):
         self.upsample = Upsample(scale=2, num_feat=width)
         self.conv1x1 = nn.Conv2d(in_channels=width, out_channels=3, kernel_size=1, padding=0, stride=1, groups=1, bias=True)
 
-    def forward(self, inp):
+        self.device = torch.device('cuda')
+        self.precision = 'single'
+
+    def forward_basic(self, inp):
         B, C, H, W = inp.shape
         inp = self.check_image_size(inp)
 
@@ -146,6 +149,47 @@ class CAIR_S(nn.Module):
 
         return x[:, :, :H, :W]
 
+    def forward(self, x):
+        self.to(self.device)
+        if self.tta:
+            return self.forward_x8(x, forward_function=self.forward_basic)
+        else:
+            return self.forward_basic(x.to(self.device))
+
+    def forward_x8(self, x, forward_function):
+        def _transform(v, op):
+            if self.precision != 'single': v = v.float()
+
+            v2np = v.data.cpu().numpy()
+            if op == 'v':
+                tfnp = v2np[:, :, :, ::-1].copy()
+            elif op == 'h':
+                tfnp = v2np[:, :, ::-1, :].copy()
+            elif op == 't':
+                tfnp = v2np.transpose((0, 1, 3, 2)).copy()
+
+            ret = torch.Tensor(tfnp).to(self.device)
+            if self.precision == 'half': ret = ret.half()
+
+            return ret
+
+        lr_list = [x.to(self.device)]
+        for tf in 'v', 'h', 't':
+            lr_list.extend([_transform(t, tf) for t in lr_list])
+        sr_list = [forward_function(aug) for aug in lr_list]
+        for i in range(len(sr_list)):
+            if i > 3:
+                sr_list[i] = _transform(sr_list[i], 't')
+            if i % 4 > 1:
+                sr_list[i] = _transform(sr_list[i], 'h')
+            if (i % 4) % 2 == 1:
+                sr_list[i] = _transform(sr_list[i], 'v')
+
+        output_cat = torch.cat(sr_list, dim=0)
+        output = output_cat.mean(dim=0, keepdim=True)
+
+        return output
+
     def check_image_size(self, x):
         _, _, h, w = x.size()
         mod_pad_h = (self.padder_size - h % self.padder_size) % self.padder_size
@@ -156,17 +200,22 @@ class CAIR_S(nn.Module):
 
 class CAIR_M(nn.Module):
 
-    def __init__(self, img_channel=3, width=16, middle_blk_num=1, enc_blk_nums=[], dec_blk_nums=[]):
+    def __init__(self, img_channel=3, width=16, middle_blk_num=1, enc_blk_nums=[], dec_blk_nums=[], tta=False):
         super().__init__()
-
-        self.intro1 = nn.Conv2d(in_channels=img_channel, out_channels=width, kernel_size=3, padding=1, stride=1, groups=1,
+        self.tta = tta
+        channel_size = [1, 2, 4]
+        self.first_intro = nn.Conv2d(
+            in_channels=img_channel, out_channels=width, kernel_size=3, padding=1, stride=1, groups=1,
                               bias=True)
-        self.intro2 = nn.Conv2d(in_channels=img_channel, out_channels=width, kernel_size=3, padding=1, stride=1, groups=1,
-                              bias=True)
-        self.intro3 = nn.Conv2d(in_channels=img_channel, out_channels=width*2, kernel_size=3, padding=1, stride=1, groups=1,
-                              bias=True)
-        self.intro4 = nn.Conv2d(in_channels=img_channel, out_channels=width*4, kernel_size=3, padding=1, stride=1, groups=1,
-                              bias=True)
+        self.intro = nn.ModuleList()
+        self.color_attention = nn.ModuleList()
+        for cha in channel_size:
+            self.intro.append(
+                nn.Conv2d(in_channels=img_channel, out_channels=width*cha, kernel_size=3, padding=1, stride=1, groups=1, bias=True)
+            )
+            self.color_attention.append(
+                ColorAttention(in_channel=img_channel, num_feat=width*cha)
+            )
         self.ending = nn.Conv2d(in_channels=width, out_channels=img_channel, kernel_size=3, padding=1, stride=1, groups=1,
                               bias=True)
 
@@ -213,40 +262,29 @@ class CAIR_M(nn.Module):
 
         self.padder_size = 2 ** len(self.encoders)
 
-        self.color_attention1 = ColorAttention(in_channel=img_channel, num_feat=width)
-        self.color_attention2 = ColorAttention(in_channel=img_channel, num_feat=width)
-        self.color_attention3 = ColorAttention(in_channel=img_channel, num_feat=width*2)
-        self.color_attention4 = ColorAttention(in_channel=img_channel, num_feat=width*4)
         self.upsample = Upsample(scale=2, num_feat=width)
         self.conv1x1 = nn.Conv2d(in_channels=width, out_channels=3, kernel_size=1, padding=0, stride=1, groups=1, bias=True)
+        self.out_color_attention = ColorAttention(in_channel=img_channel, num_feat=width)
 
-    def forward(self, inp):
+        self.device = torch.device('cuda')
+        self.precision = 'single'
+
+        # self.first_intro.cuda()
+    def forward_basic(self, inp):
         B, C, H, W = inp.shape
         datas = []
         inp = self.check_image_size(inp)
-        datas.append(self.intro1(inp))
 
-        inp_2_color = self.color_attention2(inp)
-        inp_2_resize = F.interpolate(inp, scale_factor=0.5, mode='bicubic')
-        inp_2_temp = self.intro2(inp_2_resize)
-        inp_2_color = inp_2_temp * inp_2_color
-        inp_2_color = inp_2_temp + inp_2_color
-        datas.append(inp_2_color)
+        datas.append(self.first_intro(inp))
+        res_inp = inp
 
-        inp_4_color = self.color_attention3(inp_2_resize)
-        inp_4_resize = F.interpolate(inp_2_resize, scale_factor=0.5, mode='bicubic')
-        inp_4_temp = self.intro3(inp_4_resize)
-        inp_4_color = inp_4_temp * inp_4_color
-        inp_4_color = inp_4_temp + inp_4_color
-        datas.append(inp_4_color)
-
-        inp_8_color = self.color_attention4(inp_4_resize)
-        inp_8_resize = F.interpolate(inp_4_resize, scale_factor=0.5, mode='bicubic')
-        inp_8_temp = self.intro4(inp_8_resize)
-        inp_8_color = inp_8_temp * inp_8_color
-        inp_8_color = inp_8_temp + inp_8_color
-        datas.append(inp_8_color)
-
+        for intro, color_attention in zip(self.intro, self.color_attention):
+            inp_color = color_attention(inp)
+            inp = F.interpolate(inp, scale_factor=0.5, mode='bicubic')
+            inp_resize = intro(inp)
+            inp_color = inp_resize * inp_color
+            inp_color = inp_resize + inp_color
+            datas.append(inp_color)
 
         encs = []
         num = [0, 1, 2, 3]
@@ -266,16 +304,56 @@ class CAIR_M(nn.Module):
             x = decoder(x)
 
         x = self.ending(x)
-        
-        color = self.color_attention1(inp)
+        color = self.out_color_attention(res_inp)
         color = self.upsample(color)
         color = self.conv1x1(color)
         color = x * color
         x = x + color
 
-        x = x + inp
+        x = x + res_inp
 
         return x[:, :, :H, :W]
+
+    def forward(self, x):
+        self.to(self.device)
+        if self.tta:
+            return self.forward_x8(x, forward_function=self.forward_basic)
+        else:
+            return self.forward_basic(x.to(self.device))
+
+    def forward_x8(self, x, forward_function):
+        def _transform(v, op):
+            if self.precision != 'single': v = v.float()
+
+            v2np = v.data.cpu().numpy()
+            if op == 'v':
+                tfnp = v2np[:, :, :, ::-1].copy()
+            elif op == 'h':
+                tfnp = v2np[:, :, ::-1, :].copy()
+            elif op == 't':
+                tfnp = v2np.transpose((0, 1, 3, 2)).copy()
+
+            ret = torch.Tensor(tfnp).to(self.device)
+            if self.precision == 'half': ret = ret.half()
+
+            return ret
+
+        lr_list = [x.to(self.device)]
+        for tf in 'v', 'h', 't':
+            lr_list.extend([_transform(t, tf) for t in lr_list])
+        sr_list = [forward_function(aug) for aug in lr_list]
+        for i in range(len(sr_list)):
+            if i > 3:
+                sr_list[i] = _transform(sr_list[i], 't')
+            if i % 4 > 1:
+                sr_list[i] = _transform(sr_list[i], 'h')
+            if (i % 4) % 2 == 1:
+                sr_list[i] = _transform(sr_list[i], 'v')
+
+        output_cat = torch.cat(sr_list, dim=0)
+        output = output_cat.mean(dim=0, keepdim=True)
+
+        return output
 
     def check_image_size(self, x):
         _, _, h, w = x.size()
@@ -336,7 +414,7 @@ if __name__ == '__main__':
     
     using('start . ')
     net = CAIR_M(img_channel=img_channel, width=width, middle_blk_num=middle_blk_num, 
-                      enc_blk_nums=enc_blks, dec_blk_nums=dec_blks)
+                      enc_blk_nums=enc_blks, dec_blk_nums=dec_blks, tta=True)
 
     using('network .. ')
 

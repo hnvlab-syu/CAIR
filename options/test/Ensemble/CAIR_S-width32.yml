@@ -28,12 +28,13 @@ datasets:
 
 # network structures
 network_g:
-  type: CAIR_S_TTA_Local
+  type: CAIR_S_Local
   width: 32
   enc_blk_nums: [2, 2, 4, 8]
   middle_blk_num: 12
   dec_blk_nums: [2, 2, 2, 2]
-
+  tta: true
+  
 # path
 path:
   pretrain_network_g: experiments/pretrained_models/CAIR_S-width32.pth
