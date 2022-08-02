@@ -1,5 +1,6 @@
 # ------------------------------------------------------------------------
-# Copyright (c) 2022 megvii-model. All Rights Reserved.
+# Copyright (c) 2022 Woon-Ha Yeo <woonhahaha@gmail.com>.
+# Copyright (c) 2022 Wang-Taek Oh <mm0741@naver.com>.
 # ------------------------------------------------------------------------
 # Modified from BasicSR (https://github.com/xinntao/BasicSR)
 # Copyright 2018-2020 BasicSR Authors

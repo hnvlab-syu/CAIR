@@ -1,16 +1,11 @@
 # ------------------------------------------------------------------------
-# Copyright (c) 2022 megvii-model. All Rights Reserved.
+# Copyright (c) 2022 Woon-Ha Yeo <woonhahaha@gmail.com>.
+# Copyright (c) 2022 Wang-Taek Oh <mm0741@naver.com>.
 # ------------------------------------------------------------------------
 
 '''
-Simple Baselines for Image Restoration
-
-@article{chen2022simple,
-  title={Simple Baselines for Image Restoration},
-  author={Chen, Liangyu and Chu, Xiaojie and Zhang, Xiangyu and Sun, Jian},
-  journal={arXiv preprint arXiv:2204.04676},
-  year={2022}
-}
+CAIR: Multi-Scale Color Attention Network for Instagram Filter Removal
++ Ensemble Learning
 '''
 import torch
 import torch.nn as nn
