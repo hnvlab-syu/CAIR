@@ -1,3 +1,8 @@
+# ------------------------------------------------------------------------
+# Copyright (c) 2022 Woon-Ha Yeo <woonhahaha@gmail.com>.
+# Copyright (c) 2022 Wang-Taek Oh <mm0741@naver.com>.
+# ------------------------------------------------------------------------
+
 import os
 from os import path as osp
 from glob import glob
