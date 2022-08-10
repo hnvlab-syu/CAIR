@@ -124,12 +124,18 @@ def main(args):
     # for file in val_path_list:
     #     basename = os.path.basename(file)
     #     shutil.copy(file, os.path.join(basedir, 'val/input' + os.path.basename(file)))
-
+    
     # Test
     os.makedirs(os.path.join(basedir, 'test/input'), exist_ok=True)
-    test_path_list = glob(os.path.join(basedir, 'IFFI-dataset-lr-challenge-test-wo-gt', '*/*'), recursive=True)
-    for file in test_path_list:
-        shutil.copy(file, os.path.join(basedir, 'test/input/' + os.path.basename(file)))
+    os.makedirs(os.path.join(basedir, 'test/target'), exist_ok=True)
+    test_input_path_list = sorted(glob(os.path.join(basedir, 'IFFI-dataset-lr-challenge-test-wo-gt', '*/*'), recursive=True))
+    test_target_path_list = glob(os.path.join(basedir, 'IFFI-dataset-lr-challenge-test-gt', '*/*'), recursive=True)
+    num_filters = 11
+    test_target_path_list = sorted(test_target_path_list * num_filters)
+    
+    for inp, tar in zip(test_input_path_list, test_target_path_list):
+        shutil.copy(inp, os.path.join(basedir, 'test/input/' + os.path.basename(inp)))
+        shutil.copy(tar, os.path.join(basedir, 'test/target/' + os.path.basename(inp)))
 
 
 if __name__ == '__main__':
