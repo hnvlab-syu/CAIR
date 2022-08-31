@@ -1,6 +1,6 @@
 ## CAIR: Multi-Scale Color Attention Network for Instagram Filter Removal
 
-[[arXiv](https://img.shields.io/badge/arXiv-2208.14039-b31b1b.svg)](https://arxiv.org/abs/2208.14039)
+[![arXiv](https://img.shields.io/badge/arXiv-2208.14039-b31b1b.svg)](https://arxiv.org/abs/2208.14039)
 
 **Accepted to ECCVW 2022**
 
