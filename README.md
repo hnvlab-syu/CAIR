@@ -1,5 +1,7 @@
 ## CAIR: Multi-Scale Color Attention Network for Instagram Filter Removal
 
+**Accepted to ECCVW 2022**
+
 ### Challenge
 - AIM 2022 [Instagram Filter Removal Challenge](https://codalab.lisn.upsaclay.fr/competitions/5081#learn_the_details)
 
