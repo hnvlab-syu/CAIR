@@ -8,7 +8,7 @@
 - AIM 2022 [Instagram Filter Removal Challenge](https://codalab.lisn.upsaclay.fr/competitions/5081#learn_the_details)
 
 ### Installation & Setting
-This implementation is based on [NAFNet](https://github.com/megvii-model/NAFNet). 
+This implementation is based on [NAFNet](https://github.com/megvii-research/NAFNet). 
 
 ```python
 python 3.9.5
