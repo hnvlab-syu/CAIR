@@ -102,9 +102,9 @@ python -m torch.distributed.launch --nproc_per_node=4 --master_port=4321 basicsr
 ## Pretrained Models
 | name |PSNR|SSIM| pretrained models |
 |:----|:----|:----|:----|
-|CAIR-M-width32|33.87|0.970|[Synology drive](https://gofile-365a383530.jp5.quickconnect.to/sharing/vEO5jLxZs)  |  
-|CAIR-S-width32|34.39|0.971|[Synology drive](https://gofile-365a383530.jp5.quickconnect.to/sharing/dZzINMTPs) |
-|CAIR-Ensemble-width32|34.42|0.972|[Synology drive]() |
+|CAIR-S|33.87|0.970|[Synology drive](http://gofile.me/6Z850/dZzINMTPs) |
+|CAIR-M|34.39|0.971|[Synology drive](http://gofile.me/6Z850/vEO5jLxZs)  |  
+|CAIR-Ensemble(CAIR*)|34.42|0.972|[Synology drive](http://gofile.me/6Z850/RrYI3fHgb) |
 
 ## Citation
 ```
