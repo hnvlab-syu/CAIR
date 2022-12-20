@@ -91,11 +91,11 @@ python scripts/data/concat_ensemble_input.py
 ```
 - Train ensemble network
 ```
-python -m torch.distributed.launch --nproc_per_node=4 --master_port=4321 basicsr/train.py -opt options/train/Ensemble/EnsembleNet-nb3.yml --launcher pytorch
+python -m torch.distributed.launch --nproc_per_node=4 --master_port=4321 basicsr/train.py -opt options/train/Ensemble/CAIR_Ensemble.yml --launcher pytorch
 ```
 - Test ensemble network
 ```
-python -m torch.distributed.launch --nproc_per_node=4 --master_port=4321 basicsr/test.py -opt options/test/Ensemble/EnsembleNet-nb3.yml --launcher pytorch
+python -m torch.distributed.launch --nproc_per_node=4 --master_port=4321 basicsr/test.py -opt options/test/Ensemble/CAIR_Ensemble.yml --launcher pytorch
 ```
 
 ## Pretrained Models
