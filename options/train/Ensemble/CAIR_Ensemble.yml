@@ -6,7 +6,7 @@
 # Copyright 2018-2020 BasicSR Authors
 # ------------------------------------------------------------------------
 # general settings
-name: EnsembleNet-nb3
+name: CAIR_Ensemble
 model_type: ImageRestorationModel
 scale: 1
 num_gpu: 4
@@ -37,7 +37,7 @@ datasets:
 network_g:
   type: EnsembleNet
   width: 32
-  ens_num: 3 # number of ensemble models
+  ens_num: 2 # number of ensemble models
   blk_num: 3 # number of NAFBlocks
   tta: False
 
