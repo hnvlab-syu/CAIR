@@ -116,7 +116,7 @@ python -m torch.distributed.launch --nproc_per_node=4 --master_port=4321 basicsr
 ```
 
 ## Contacts
-If you have any questions, please contact mm074111@gmail.com
+If you have any question, please contact mm074111@gmail.com
 
 ## Acknowledgements
 <details><summary>Expand</summary>
