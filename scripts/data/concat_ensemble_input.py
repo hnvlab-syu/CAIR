@@ -18,9 +18,8 @@ def create_dir(dir):
 
 
 def main():
-    basedir1 = './results/CAIR_S-width64-test-TTA-Ensemble'
-    basedir2 = './results/CAIR_S-width32-test-TTA-Ensemble'
-    basedir3 = './results/CAIR_M-width32-test-TTA-Ensemble'
+    basedir1 = './results/CAIR_S-width32-test-TTA-Ensemble'
+    basedir2 = './results/CAIR_M-width32-test-TTA-Ensemble'
     resultdirs = ['visualization/iffi-trainset', 'visualization/iffi-testset']
     concatdirs = ['./datasets/IFFI/train_ensemble/input', './datasets/IFFI/test_ensemble/input']
     
@@ -36,9 +35,8 @@ def main():
             
             image1 = cv2.imread(f)
             image2 = cv2.imread(osp.join(basedir2, resultdir, basename))
-            image3 = cv2.imread(osp.join(basedir3, resultdir, basename))
             
-            concat_image = np.concatenate((image1, image2, image3), axis=2)
+            concat_image = np.concatenate((image1, image2), axis=2)
             
             np.save(osp.join(concatdir, basename.split('.')[0] + '.npy'), concat_image)
 
