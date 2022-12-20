@@ -1,10 +1,9 @@
 # CAIR: Multi-Scale Color Attention Network for Instagram Filter Removal (ECCV 2022 Workshop)
+[Woon-Ha Yeo](https://scholar.google.com/citations?user=rzLqXnkAAAAJ&hl=ko&oi=sra), [Wang-Taek Oh](https://scholar.google.com/citations?user=lbm9wBQAAAAJ&hl=ko&oi=sra), Kyung-Su Kang, [Young-Il Kim](https://scholar.google.co.kr/citations?hl=ko&user=VJWlpfsAAAAJ), Han-Cheol Ryu
 
 [![arXiv](https://img.shields.io/badge/arXiv-2208.14039-b31b1b.svg)](https://arxiv.org/abs/2208.14039)
 [![video](https://img.shields.io/badge/Video-Presentation-F9D371)](https://www.youtube.com/watch?v=4LIOKXfiQSE)
 [![slides](https://img.shields.io/badge/Presentation-Slides-B762C1)](https://www.slideshare.net/WoonHaYeo/cair-fast-and-lightweight-multiscale-color-attention-network-for-instagram-filter-removal)
-
-[Woon-Ha Yeo](https://scholar.google.com/citations?user=rzLqXnkAAAAJ&hl=ko&oi=sra), [Wang-Taek Oh](https://scholar.google.com/citations?user=lbm9wBQAAAAJ&hl=ko&oi=sra), Kyung-Su Kang, [Young-Il Kim](https://scholar.google.co.kr/citations?hl=ko&user=VJWlpfsAAAAJ), Han-Cheol Ryu
 
 ### Challenge
 - AIM 2022 [Instagram Filter Removal Challenge](https://codalab.lisn.upsaclay.fr/competitions/5081#learn_the_details)
