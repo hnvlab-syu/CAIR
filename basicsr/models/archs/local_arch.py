@@ -7,8 +7,16 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
+
 class AvgPool2d(nn.Module):
-    def __init__(self, kernel_size=None, base_size=None, auto_pad=True, fast_imp=False, train_size=None):
+    def __init__(
+        self,
+        kernel_size=None,
+        base_size=None,
+        auto_pad=True,
+        fast_imp=False,
+        train_size=None,
+    ):
         super().__init__()
         self.kernel_size = kernel_size
         self.base_size = base_size
@@ -22,7 +30,7 @@ class AvgPool2d(nn.Module):
         self.train_size = train_size
 
     def extra_repr(self) -> str:
-        return 'kernel_size={}, base_size={}, stride={}, fast_imp={}'.format(
+        return "kernel_size={}, base_size={}, stride={}, fast_imp={}".format(
             self.kernel_size, self.base_size, self.kernel_size, self.fast_imp
         )
 
@@ -54,15 +62,27 @@ class AvgPool2d(nn.Module):
                 r2 = min(self.max_r2, r2)
                 s = x[:, :, ::r1, ::r2].cumsum(dim=-1).cumsum(dim=-2)
                 n, c, h, w = s.shape
-                k1, k2 = min(h - 1, self.kernel_size[0] // r1), min(w - 1, self.kernel_size[1] // r2)
-                out = (s[:, :, :-k1, :-k2] - s[:, :, :-k1, k2:] - s[:, :, k1:, :-k2] + s[:, :, k1:, k2:]) / (k1 * k2)
+                k1, k2 = min(h - 1, self.kernel_size[0] // r1), min(
+                    w - 1, self.kernel_size[1] // r2
+                )
+                out = (
+                    s[:, :, :-k1, :-k2]
+                    - s[:, :, :-k1, k2:]
+                    - s[:, :, k1:, :-k2]
+                    + s[:, :, k1:, k2:]
+                ) / (k1 * k2)
                 out = torch.nn.functional.interpolate(out, scale_factor=(r1, r2))
         else:
             n, c, h, w = x.shape
             s = x.cumsum(dim=-1).cumsum_(dim=-2)
             s = torch.nn.functional.pad(s, (1, 0, 1, 0))  # pad 0 for convenience
             k1, k2 = min(h, self.kernel_size[0]), min(w, self.kernel_size[1])
-            s1, s2, s3, s4 = s[:, :, :-k1, :-k2], s[:, :, :-k1, k2:], s[:, :, k1:, :-k2], s[:, :, k1:, k2:]
+            s1, s2, s3, s4 = (
+                s[:, :, :-k1, :-k2],
+                s[:, :, :-k1, k2:],
+                s[:, :, k1:, :-k2],
+                s[:, :, k1:, k2:],
+            )
             out = s4 + s1 - s2 - s3
             out = out / (k1 * k2)
 
@@ -71,9 +91,10 @@ class AvgPool2d(nn.Module):
             _h, _w = out.shape[2:]
             # print(x.shape, self.kernel_size)
             pad2d = ((w - _w) // 2, (w - _w + 1) // 2, (h - _h) // 2, (h - _h + 1) // 2)
-            out = torch.nn.functional.pad(out, pad2d, mode='replicate')
+            out = torch.nn.functional.pad(out, pad2d, mode="replicate")
 
         return out
+
 
 def replace_layers(model, base_size, train_size, fast_imp, **kwargs):
     for n, m in model.named_children():
@@ -82,12 +103,14 @@ def replace_layers(model, base_size, train_size, fast_imp, **kwargs):
             replace_layers(m, base_size, train_size, fast_imp, **kwargs)
 
         if isinstance(m, nn.AdaptiveAvgPool2d):
-            pool = AvgPool2d(base_size=base_size, fast_imp=fast_imp, train_size=train_size)
+            pool = AvgPool2d(
+                base_size=base_size, fast_imp=fast_imp, train_size=train_size
+            )
             assert m.output_size == 1
             setattr(model, n, pool)
 
 
-'''
+"""
 ref. 
 @article{chu2021tlsc,
   title={Revisiting Global Statistics Aggregation for Improving Image Restoration},
@@ -95,8 +118,10 @@ ref.
   journal={arXiv preprint arXiv:2112.04491},
   year={2021}
 }
-'''
-class Local_Base():
+"""
+
+
+class Local_Base:
     def convert(self, *args, train_size, **kwargs):
         replace_layers(self, *args, train_size=train_size, **kwargs)
         imgs = torch.rand(train_size)

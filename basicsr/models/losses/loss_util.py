@@ -28,7 +28,7 @@ def reduce_loss(loss, reduction):
         return loss.sum()
 
 
-def weight_reduce_loss(loss, weight=None, reduction='mean'):
+def weight_reduce_loss(loss, weight=None, reduction="mean"):
     """Apply element-wise weight and reduce loss.
 
     Args:
@@ -47,10 +47,10 @@ def weight_reduce_loss(loss, weight=None, reduction='mean'):
         loss = loss * weight
 
     # if weight is not specified or reduction is sum, just reduce the loss
-    if weight is None or reduction == 'sum':
+    if weight is None or reduction == "sum":
         loss = reduce_loss(loss, reduction)
     # if reduction is mean, then compute mean over weight region
-    elif reduction == 'mean':
+    elif reduction == "mean":
         if weight.size(1) > 1:
             weight = weight.sum()
         else:
@@ -92,7 +92,7 @@ def weighted_loss(loss_func):
     """
 
     @functools.wraps(loss_func)
-    def wrapper(pred, target, weight=None, reduction='mean', **kwargs):
+    def wrapper(pred, target, weight=None, reduction="mean", **kwargs):
         # get element-wise loss
         loss = loss_func(pred, target, **kwargs)
         loss = weight_reduce_loss(loss, weight, reduction)

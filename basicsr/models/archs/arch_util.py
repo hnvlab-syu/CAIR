@@ -21,6 +21,7 @@ from basicsr.utils import get_root_logger
 #     #       'Otherwise install BasicSR with compiling dcn.')
 #
 
+
 @torch.no_grad()
 def default_init_weights(module_list, scale=1, bias_fill=0, **kwargs):
     """Initialize network weights.
@@ -117,16 +118,15 @@ class Upsample(nn.Sequential):
             m.append(nn.Conv2d(num_feat, 9 * num_feat, 3, 1, 1))
             m.append(nn.PixelShuffle(3))
         else:
-            raise ValueError(f'scale {scale} is not supported. '
-                             'Supported scales: 2^n and 3.')
+            raise ValueError(
+                f"scale {scale} is not supported. " "Supported scales: 2^n and 3."
+            )
         super(Upsample, self).__init__(*m)
 
 
-def flow_warp(x,
-              flow,
-              interp_mode='bilinear',
-              padding_mode='zeros',
-              align_corners=True):
+def flow_warp(
+    x, flow, interp_mode="bilinear", padding_mode="zeros", align_corners=True
+):
     """Warp an image or feature map with optical flow.
 
     Args:
@@ -146,8 +146,8 @@ def flow_warp(x,
     _, _, h, w = x.size()
     # create mesh grid
     grid_y, grid_x = torch.meshgrid(
-        torch.arange(0, h).type_as(x),
-        torch.arange(0, w).type_as(x))
+        torch.arange(0, h).type_as(x), torch.arange(0, w).type_as(x)
+    )
     grid = torch.stack((grid_x, grid_y), 2).float()  # W(x), H(y), 2
     grid.requires_grad = False
 
@@ -161,17 +161,14 @@ def flow_warp(x,
         vgrid_scaled,
         mode=interp_mode,
         padding_mode=padding_mode,
-        align_corners=align_corners)
+        align_corners=align_corners,
+    )
 
     # TODO, what if align_corners=False
     return output
 
 
-def resize_flow(flow,
-                size_type,
-                sizes,
-                interp_mode='bilinear',
-                align_corners=False):
+def resize_flow(flow, size_type, sizes, interp_mode="bilinear", align_corners=False):
     """Resize a flow according to ratio or shape.
 
     Args:
@@ -192,13 +189,14 @@ def resize_flow(flow,
         Tensor: Resized flow.
     """
     _, _, flow_h, flow_w = flow.size()
-    if size_type == 'ratio':
+    if size_type == "ratio":
         output_h, output_w = int(flow_h * sizes[0]), int(flow_w * sizes[1])
-    elif size_type == 'shape':
+    elif size_type == "shape":
         output_h, output_w = sizes[0], sizes[1]
     else:
         raise ValueError(
-            f'Size type should be ratio or shape, but got type {size_type}.')
+            f"Size type should be ratio or shape, but got type {size_type}."
+        )
 
     input_flow = flow.clone()
     ratio_h = output_h / flow_h
@@ -209,13 +207,14 @@ def resize_flow(flow,
         input=input_flow,
         size=(output_h, output_w),
         mode=interp_mode,
-        align_corners=align_corners)
+        align_corners=align_corners,
+    )
     return resized_flow
 
 
 # TODO: may write a cpp file
 def pixel_unshuffle(x, scale):
-    """ Pixel unshuffle.
+    """Pixel unshuffle.
 
     Args:
         x (Tensor): Input feature with shape (b, c, hh, hw).
@@ -262,7 +261,6 @@ def pixel_unshuffle(x, scale):
 
 
 class LayerNormFunction(torch.autograd.Function):
-
     @staticmethod
     def forward(ctx, x, weight, bias, eps):
         ctx.eps = eps
@@ -284,20 +282,25 @@ class LayerNormFunction(torch.autograd.Function):
         mean_g = g.mean(dim=1, keepdim=True)
 
         mean_gy = (g * y).mean(dim=1, keepdim=True)
-        gx = 1. / torch.sqrt(var + eps) * (g - y * mean_gy - mean_g)
-        return gx, (grad_output * y).sum(dim=3).sum(dim=2).sum(dim=0), grad_output.sum(dim=3).sum(dim=2).sum(
-            dim=0), None
+        gx = 1.0 / torch.sqrt(var + eps) * (g - y * mean_gy - mean_g)
+        return (
+            gx,
+            (grad_output * y).sum(dim=3).sum(dim=2).sum(dim=0),
+            grad_output.sum(dim=3).sum(dim=2).sum(dim=0),
+            None,
+        )
+
 
 class LayerNorm2d(nn.Module):
-
     def __init__(self, channels, eps=1e-6):
         super(LayerNorm2d, self).__init__()
-        self.register_parameter('weight', nn.Parameter(torch.ones(channels)))
-        self.register_parameter('bias', nn.Parameter(torch.zeros(channels)))
+        self.register_parameter("weight", nn.Parameter(torch.ones(channels)))
+        self.register_parameter("bias", nn.Parameter(torch.zeros(channels)))
         self.eps = eps
 
     def forward(self, x):
         return LayerNormFunction.apply(x, self.weight, self.bias, self.eps)
+
 
 # handle multiple input
 class MySequential(nn.Sequential):
@@ -309,7 +312,10 @@ class MySequential(nn.Sequential):
                 inputs = module(inputs)
         return inputs
 
+
 import time
+
+
 def measure_inference_speed(model, data, max_iter=200, log_interval=50):
     model.eval()
 
@@ -335,43 +341,43 @@ def measure_inference_speed(model, data, max_iter=200, log_interval=50):
             if (i + 1) % log_interval == 0:
                 fps = (i + 1 - num_warmup) / pure_inf_time
                 print(
-                    f'Done image [{i + 1:<3}/ {max_iter}], '
-                    f'fps: {fps:.1f} img / s, '
-                    f'times per image: {1000 / fps:.1f} ms / img',
-                    flush=True)
+                    f"Done image [{i + 1:<3}/ {max_iter}], "
+                    f"fps: {fps:.1f} img / s, "
+                    f"times per image: {1000 / fps:.1f} ms / img",
+                    flush=True,
+                )
 
         if (i + 1) == max_iter:
             fps = (i + 1 - num_warmup) / pure_inf_time
             print(
-                f'Overall fps: {fps:.1f} img / s, '
-                f'times per image: {1000 / fps:.1f} ms / img',
-                flush=True)
+                f"Overall fps: {fps:.1f} img / s, "
+                f"times per image: {1000 / fps:.1f} ms / img",
+                flush=True,
+            )
             break
     return fps
 
 
 def get_gaussian_kernel(kernel_size=21, sigma=5, channels=3):
-    #if not kernel_size: kernel_size = int(2*np.ceil(2*sigma)+1)
-    #print("Kernel is: ",kernel_size)
-    #print("Sigma is: ",sigma)
-    padding = kernel_size//2
+    # if not kernel_size: kernel_size = int(2*np.ceil(2*sigma)+1)
+    # print("Kernel is: ",kernel_size)
+    # print("Sigma is: ",sigma)
+    padding = kernel_size // 2
     # Create a x, y coordinate grid of shape (kernel_size, kernel_size, 2)
     x_coord = torch.arange(kernel_size)
     x_grid = x_coord.repeat(kernel_size).view(kernel_size, kernel_size)
     y_grid = x_grid.t()
     xy_grid = torch.stack([x_grid, y_grid], dim=-1).float()
 
-    mean = (kernel_size - 1)/2.
-    variance = sigma**2.
+    mean = (kernel_size - 1) / 2.0
+    variance = sigma**2.0
 
     # Calculate the 2-dimensional gaussian kernel which is
     # the product of two gaussian distributions for two different
     # variables (in this case called x and y)
-    gaussian_kernel = (1./(2.*math.pi*variance)) *\
-                      torch.exp(
-                          -torch.sum((xy_grid - mean)**2., dim=-1) /\
-                          (2*variance)
-                      )
+    gaussian_kernel = (1.0 / (2.0 * math.pi * variance)) * torch.exp(
+        -torch.sum((xy_grid - mean) ** 2.0, dim=-1) / (2 * variance)
+    )
 
     # Make sure sum of values in gaussian kernel equals 1.
     gaussian_kernel = gaussian_kernel / torch.sum(gaussian_kernel)
@@ -380,8 +386,13 @@ def get_gaussian_kernel(kernel_size=21, sigma=5, channels=3):
     gaussian_kernel = gaussian_kernel.view(1, 1, kernel_size, kernel_size)
     gaussian_kernel = gaussian_kernel.repeat(channels, 1, 1, 1)
 
-    gaussian_filter = nn.Conv2d(in_channels=channels, out_channels=channels,
-                                kernel_size=kernel_size, groups=channels, bias=False)
+    gaussian_filter = nn.Conv2d(
+        in_channels=channels,
+        out_channels=channels,
+        kernel_size=kernel_size,
+        groups=channels,
+        bias=False,
+    )
 
     gaussian_filter.weight.data = gaussian_kernel
     gaussian_filter.weight.requires_grad = False

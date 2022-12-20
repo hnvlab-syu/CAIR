@@ -11,7 +11,7 @@ import time
 from .dist_util import get_dist_info, master_only
 
 
-class MessageLogger():
+class MessageLogger:
     """Message logger for printing.
 
     Args:
@@ -25,11 +25,11 @@ class MessageLogger():
     """
 
     def __init__(self, opt, start_iter=1, tb_logger=None):
-        self.exp_name = opt['name']
-        self.interval = opt['logger']['print_freq']
+        self.exp_name = opt["name"]
+        self.interval = opt["logger"]["print_freq"]
         self.start_iter = start_iter
-        self.max_iters = opt['train']['total_iter']
-        self.use_tb_logger = opt['logger']['use_tb_logger']
+        self.max_iters = opt["train"]["total_iter"]
+        self.use_tb_logger = opt["logger"]["use_tb_logger"]
         self.tb_logger = tb_logger
         self.start_time = time.time()
         self.logger = get_root_logger()
@@ -48,41 +48,43 @@ class MessageLogger():
                 data_time (float): Data time for each iter.
         """
         # epoch, iter, learning rates
-        epoch = log_vars.pop('epoch')
-        current_iter = log_vars.pop('iter')
-        total_iter = log_vars.pop('total_iter')
-        lrs = log_vars.pop('lrs')
+        epoch = log_vars.pop("epoch")
+        current_iter = log_vars.pop("iter")
+        total_iter = log_vars.pop("total_iter")
+        lrs = log_vars.pop("lrs")
 
-        message = (f'[{self.exp_name[:5]}..][epoch:{epoch:3d}, '
-                   f'iter:{current_iter:8,d}, lr:(')
+        message = (
+            f"[{self.exp_name[:5]}..][epoch:{epoch:3d}, "
+            f"iter:{current_iter:8,d}, lr:("
+        )
         for v in lrs:
-            message += f'{v:.3e},'
-        message += ')] '
+            message += f"{v:.3e},"
+        message += ")] "
 
         # time and estimated time
-        if 'time' in log_vars.keys():
-            iter_time = log_vars.pop('time')
-            data_time = log_vars.pop('data_time')
+        if "time" in log_vars.keys():
+            iter_time = log_vars.pop("time")
+            data_time = log_vars.pop("data_time")
 
             total_time = time.time() - self.start_time
             time_sec_avg = total_time / (current_iter - self.start_iter + 1)
             eta_sec = time_sec_avg * (self.max_iters - current_iter - 1)
             eta_str = str(datetime.timedelta(seconds=int(eta_sec)))
-            message += f'[eta: {eta_str}, '
-            message += f'time (data): {iter_time:.3f} ({data_time:.3f})] '
+            message += f"[eta: {eta_str}, "
+            message += f"time (data): {iter_time:.3f} ({data_time:.3f})] "
 
         # other items, especially losses
         for k, v in log_vars.items():
-            message += f'{k}: {v:.4e} '
+            message += f"{k}: {v:.4e} "
             # tensorboard logger
-            if self.use_tb_logger and 'debug' not in self.exp_name:
+            if self.use_tb_logger and "debug" not in self.exp_name:
                 normed_step = 10000 * (current_iter / total_iter)
                 normed_step = int(normed_step)
 
-                if k.startswith('l_'):
-                    self.tb_logger.add_scalar(f'losses/{k}', v, normed_step)
-                elif k.startswith('m_'):
-                    self.tb_logger.add_scalar(f'metrics/{k}', v, normed_step)
+                if k.startswith("l_"):
+                    self.tb_logger.add_scalar(f"losses/{k}", v, normed_step)
+                elif k.startswith("m_"):
+                    self.tb_logger.add_scalar(f"metrics/{k}", v, normed_step)
                 else:
                     assert 1 == 0
                 # else:
@@ -93,6 +95,7 @@ class MessageLogger():
 @master_only
 def init_tb_logger(log_dir):
     from torch.utils.tensorboard import SummaryWriter
+
     tb_logger = SummaryWriter(log_dir=log_dir)
     return tb_logger
 
@@ -101,32 +104,32 @@ def init_tb_logger(log_dir):
 def init_wandb_logger(opt):
     """We now only use wandb to sync tensorboard log."""
     import wandb
-    logger = logging.getLogger('basicsr')
 
-    project = opt['logger']['wandb']['project']
-    resume_id = opt['logger']['wandb'].get('resume_id')
+    logger = logging.getLogger("basicsr")
+
+    project = opt["logger"]["wandb"]["project"]
+    resume_id = opt["logger"]["wandb"].get("resume_id")
     if resume_id:
         wandb_id = resume_id
-        resume = 'allow'
-        logger.warning(f'Resume wandb logger with id={wandb_id}.')
+        resume = "allow"
+        logger.warning(f"Resume wandb logger with id={wandb_id}.")
     else:
         wandb_id = wandb.util.generate_id()
-        resume = 'never'
+        resume = "never"
 
     wandb.init(
         id=wandb_id,
         resume=resume,
-        name=opt['name'],
+        name=opt["name"],
         config=opt,
         project=project,
-        sync_tensorboard=True)
+        sync_tensorboard=True,
+    )
 
-    logger.info(f'Use wandb logger with id={wandb_id}; project={project}.')
+    logger.info(f"Use wandb logger with id={wandb_id}; project={project}.")
 
 
-def get_root_logger(logger_name='basicsr',
-                    log_level=logging.INFO,
-                    log_file=None):
+def get_root_logger(logger_name="basicsr", log_level=logging.INFO, log_file=None):
     """Get the root logger.
 
     The logger will be initialized if it has not been initialized. By default a
@@ -149,13 +152,13 @@ def get_root_logger(logger_name='basicsr',
     if logger.hasHandlers():
         return logger
 
-    format_str = '%(asctime)s %(levelname)s: %(message)s'
+    format_str = "%(asctime)s %(levelname)s: %(message)s"
     logging.basicConfig(format=format_str, level=log_level)
     rank, _ = get_dist_info()
     if rank != 0:
-        logger.setLevel('ERROR')
+        logger.setLevel("ERROR")
     elif log_file is not None:
-        file_handler = logging.FileHandler(log_file, 'w')
+        file_handler = logging.FileHandler(log_file, "w")
         file_handler.setFormatter(logging.Formatter(format_str))
         file_handler.setLevel(log_level)
         logger.addHandler(file_handler)
@@ -172,6 +175,7 @@ def get_env_info():
     import torchvision
 
     from basicsr.version import __version__
+
     msg = r"""
                 ____                _       _____  ____
                / __ ) ____ _ _____ (_)_____/ ___/ / __ \
@@ -184,8 +188,10 @@ def get_env_info():
   / /_/ // /_/ // /_/ // /_/ /  / /___/ /_/ // /__ / /<    /_/
   \____/ \____/ \____/ \____/  /_____/\____/ \___//_/|_|  (_)
     """
-    msg += ('\nVersion Information: '
-            f'\n\tBasicSR: {__version__}'
-            f'\n\tPyTorch: {torch.__version__}'
-            f'\n\tTorchVision: {torchvision.__version__}')
+    msg += (
+        "\nVersion Information: "
+        f"\n\tBasicSR: {__version__}"
+        f"\n\tPyTorch: {torch.__version__}"
+        f"\n\tTorchVision: {torchvision.__version__}"
+    )
     return msg

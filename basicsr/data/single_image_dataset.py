@@ -35,20 +35,19 @@ class SingleImageDataset(data.Dataset):
         self.opt = opt
         # file client (io backend)
         self.file_client = None
-        self.io_backend_opt = opt['io_backend']
-        self.mean = opt['mean'] if 'mean' in opt else None
-        self.std = opt['std'] if 'std' in opt else None
-        self.lq_folder = opt['dataroot_lq']
+        self.io_backend_opt = opt["io_backend"]
+        self.mean = opt["mean"] if "mean" in opt else None
+        self.std = opt["std"] if "std" in opt else None
+        self.lq_folder = opt["dataroot_lq"]
 
-        if self.io_backend_opt['type'] == 'lmdb':
-            self.io_backend_opt['db_paths'] = [self.lq_folder]
-            self.io_backend_opt['client_keys'] = ['lq']
+        if self.io_backend_opt["type"] == "lmdb":
+            self.io_backend_opt["db_paths"] = [self.lq_folder]
+            self.io_backend_opt["client_keys"] = ["lq"]
             self.paths = paths_from_lmdb(self.lq_folder)
-        elif 'meta_info_file' in self.opt:
-            with open(self.opt['meta_info_file'], 'r') as fin:
+        elif "meta_info_file" in self.opt:
+            with open(self.opt["meta_info_file"], "r") as fin:
                 self.paths = [
-                    osp.join(self.lq_folder,
-                             line.split(' ')[0]) for line in fin
+                    osp.join(self.lq_folder, line.split(" ")[0]) for line in fin
                 ]
         else:
             self.paths = sorted(list(scandir(self.lq_folder, full_path=True)))
@@ -56,11 +55,12 @@ class SingleImageDataset(data.Dataset):
     def __getitem__(self, index):
         if self.file_client is None:
             self.file_client = FileClient(
-                self.io_backend_opt.pop('type'), **self.io_backend_opt)
+                self.io_backend_opt.pop("type"), **self.io_backend_opt
+            )
 
         # load lq image
         lq_path = self.paths[index]
-        img_bytes = self.file_client.get(lq_path, 'lq')
+        img_bytes = self.file_client.get(lq_path, "lq")
         img_lq = imfrombytes(img_bytes, float32=True)
 
         # TODO: color space transform
@@ -69,7 +69,7 @@ class SingleImageDataset(data.Dataset):
         # normalize
         if self.mean is not None or self.std is not None:
             normalize(img_lq, self.mean, self.std, inplace=True)
-        return {'lq': img_lq, 'lq_path': lq_path}
+        return {"lq": img_lq, "lq_path": lq_path}
 
     def __len__(self):
         return len(self.paths)
@@ -96,20 +96,19 @@ class SingleNpyDataset(data.Dataset):
         self.opt = opt
         # file client (io backend)
         self.file_client = None
-        self.io_backend_opt = opt['io_backend']
-        self.mean = opt['mean'] if 'mean' in opt else None
-        self.std = opt['std'] if 'std' in opt else None
-        self.lq_folder = opt['dataroot_lq']
+        self.io_backend_opt = opt["io_backend"]
+        self.mean = opt["mean"] if "mean" in opt else None
+        self.std = opt["std"] if "std" in opt else None
+        self.lq_folder = opt["dataroot_lq"]
 
-        if self.io_backend_opt['type'] == 'lmdb':
-            self.io_backend_opt['db_paths'] = [self.lq_folder]
-            self.io_backend_opt['client_keys'] = ['lq']
+        if self.io_backend_opt["type"] == "lmdb":
+            self.io_backend_opt["db_paths"] = [self.lq_folder]
+            self.io_backend_opt["client_keys"] = ["lq"]
             self.paths = paths_from_lmdb(self.lq_folder)
-        elif 'meta_info_file' in self.opt:
-            with open(self.opt['meta_info_file'], 'r') as fin:
+        elif "meta_info_file" in self.opt:
+            with open(self.opt["meta_info_file"], "r") as fin:
                 self.paths = [
-                    osp.join(self.lq_folder,
-                             line.split(' ')[0]) for line in fin
+                    osp.join(self.lq_folder, line.split(" ")[0]) for line in fin
                 ]
         else:
             self.paths = sorted(list(scandir(self.lq_folder, full_path=True)))
@@ -117,7 +116,8 @@ class SingleNpyDataset(data.Dataset):
     def __getitem__(self, index):
         if self.file_client is None:
             self.file_client = FileClient(
-                self.io_backend_opt.pop('type'), **self.io_backend_opt)
+                self.io_backend_opt.pop("type"), **self.io_backend_opt
+            )
 
         # load lq image
         lq_path = self.paths[index]
@@ -125,12 +125,11 @@ class SingleNpyDataset(data.Dataset):
         # TODO: color space transform
         # BGR to RGB, HWC to CHW, numpy to tensor
         img_lq = np.load(lq_path)
-        img_lq = img2tensor(img_lq, bgr2rgb=True,
-                                    float32=True)
+        img_lq = img2tensor(img_lq, bgr2rgb=True, float32=True)
         # normalize
         if self.mean is not None or self.std is not None:
             normalize(img_lq, self.mean, self.std, inplace=True)
-        return {'lq': img_lq, 'lq_path': lq_path}
+        return {"lq": img_lq, "lq_path": lq_path}
 
     def __len__(self):
         return len(self.paths)
